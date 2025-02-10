@@ -1,0 +1,29 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  finalizers:
+    - resources-finalizer.argocd.argoproj.io
+  name: foo
+spec:
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: {{ PROJECT }}-{{ ENV }}
+  project: {{ PROJECT }}
+  sources:
+    - directory:
+        jsonnet: {}
+        recurse: true
+      path: manifests
+      ref: gitRepo
+      repoURL: 'https://gitlab.pmb.cz/ocp_apps/{{ PROJECT }}.git'
+      targetRevision: env/{{ ENV }}
+    - chart: foo
+      helm:
+        valueFiles:
+          - $gitRepo/helm-values/foo.yaml
+      repoURL: 'https://nexus.pmb.cz/repository/helm-{{PROJECT }}-hosted/'
+      targetRevision: 0.1.0
+  syncPolicy:
+    automated:
+      prune: false
+      selfHeal: true
